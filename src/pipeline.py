@@ -42,9 +42,22 @@ async def _download_all(sources, ua):
         return await asyncio.gather(*[_fetch(s, u) for u in sources])
 
 
+def _keep_patterns():
+    return [x.strip().lower() for x in C.load_list("always_keep.txt") if x.strip()]
+
+
+def _is_keep(entry, pats):
+    if not pats:
+        return False
+    url = entry.get("url", "").lower()
+    name = normalize(entry.get("name", ""))
+    return any(p and (p in url or p in name) for p in pats)
+
+
 def collect_channels(sources, cat, ua):
     """Download + parse + URL-dedup + classify -> list of channel dicts."""
     texts = asyncio.run(_download_all(sources, ua))
+    keep_pats = _keep_patterns()
     seen = set()
     channels = []
     for src, txt in zip(sources, texts):
@@ -55,6 +68,7 @@ def collect_channels(sources, cat, ua):
             seen.add(u)
             e["_cat"] = cat.classify(e)
             e["_rank"] = cat.selected_rank(e) if e["_cat"] == 1 else 10 ** 9
+            e["_keep"] = _is_keep(e, keep_pats)
             channels.append(e)
     return channels
 
@@ -108,7 +122,7 @@ def apply_flapping(channels, alive, prev_state, threshold):
     dropped = 0
     for e in channels:
         u = e["url"]
-        if alive.get(u):
+        if e.get("_keep") or alive.get(u):
             new_fail[u] = 0
             kept.append(e)
         else:
@@ -141,6 +155,9 @@ def apply_caps(channels, settings):
     for e in channels:
         c = e["_cat"]
         counts[c] = counts.get(c, 0) + 1
+        if e.get("_keep"):
+            out.append(e)
+            continue
         if c == 5 and settings["max_others"] and counts[5] > settings["max_others"]:
             continue
         if settings["max_per_category"] and counts[c] > settings["max_per_category"]:
