@@ -1,4 +1,5 @@
 # AutoIPTVPlaylist2
-Auto IPTV Playlist 2
+All Playlist:
+https://raw.githubusercontent.com/sahadat-savar/AutoIPTVPlaylist/refs/heads/main/output/AllPlaylist.m3u
 
-test
+Bangla Playlist:
