@@ -1,0 +1,12 @@
+# ALWAYS-KEEP list. Channels matching any line here are ALWAYS included and
+# never removed by the dead-link check, flapping, or category caps.
+#
+# Match = the text appears in the channel's URL OR its name (case-insensitive).
+# Use a host, an IP, a URL fragment, or a channel-name keyword.
+#
+# Useful when GitHub's runner can't reach a stream that works fine for you
+# (e.g. geo/IP-restricted hosts), so it wrongly gets marked dead.
+#
+# --- your reported channels (edit/remove as needed) ---
+198.195.239.50
+owrcovcrpy.gpcdn.net
