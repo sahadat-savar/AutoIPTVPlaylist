@@ -1,0 +1,25 @@
+# ---- Speed / accuracy ----
+concurrency: 250          # parallel checks PER shard job
+timeout_total: 8          # seconds per URL (lower = faster, drops slow links sooner)
+timeout_connect: 5
+retries: 1                # extra tries on timeout/connection errors
+check_dead_links: true    # (local run only; the CI workflow always checks)
+hls_verify: true          # for .m3u8, read a tiny chunk to confirm it's real
+
+# ---- Parallelism (GitHub Actions) ----
+shards: 10                # split checking across N parallel jobs. 200k URLs / 10
+                          # => ~20k each => a few minutes per job.
+
+# ---- Stability (flapping control) ----
+fail_threshold: 3         # a channel is removed only after N consecutive fails
+min_keep_ratio: 0.5       # ABORT commit if kept < 50% of last run (source down?)
+
+# ---- Output shaping ----
+set_group_by_category: false  # false = keep each channel's ORIGINAL group-title.
+                              # Priority only controls ORDER in AllPlaylist, not names.
+sort_within_category: true    # Selected uses selected.txt order; others A-Z
+max_others: 0                # cap "Others" bucket (0 = unlimited)
+max_per_category: 0          # cap every bucket (0 = unlimited)
+
+# ---- Network identity ----
+user_agent: "VLC/3.0.20 (Linux; VLC 3.0.20)"

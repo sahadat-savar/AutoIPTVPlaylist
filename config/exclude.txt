@@ -1,0 +1,6 @@
+# Channels that must NEVER be treated as "Selected", even if a keyword in
+# selected.txt matches them. Whole-word match. Use this to block look-alikes.
+#
+# Example: if selected.txt has "star" but you don't want the sports one:
+# star sports
+# star gold
