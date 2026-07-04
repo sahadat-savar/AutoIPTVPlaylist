@@ -1,0 +1,101 @@
+name: Update IPTV Playlists
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'      # every 6 hours (UTC)
+  workflow_dispatch:
+
+concurrency:
+  group: iptv-playlist-update
+  cancel-in-progress: false     # never overlap; no pile-up
+
+permissions:
+  contents: write
+
+jobs:
+  # -------------------------------------------------- 1) prepare + shard
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      shards: ${{ steps.split.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - name: Prepare + split shards
+        id: split
+        run: |
+          python -m src.prepare
+          echo "shards=$(cat work/shards.txt)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prep
+          path: work/
+          retention-days: 1
+
+  # -------------------------------------------------- 2) parallel checking
+  check:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJson(needs.prepare.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: prep
+          path: work/
+      - name: Check shard ${{ matrix.shard }}
+        run: python -m src.check_shard ${{ matrix.shard }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.shard }}
+          path: work/result_${{ matrix.shard }}.json
+          retention-days: 1
+
+  # -------------------------------------------------- 3) merge + commit
+  finalize:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: prep
+          path: work/
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+          path: work/
+          merge-multiple: true
+      - name: Finalize playlists
+        run: python -m src.finalize
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output/AllPlaylist.m3u output/BanglaPlaylist.m3u state/state.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update playlists ($(date -u +'%Y-%m-%d %H:%M UTC'))"
+            git push
+          fi
