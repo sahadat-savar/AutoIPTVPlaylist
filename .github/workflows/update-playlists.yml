@@ -53,7 +53,7 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
       - run: pip install -r requirements.txt
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: prep
           path: work/
@@ -77,11 +77,11 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
       - run: pip install -r requirements.txt
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: prep
           path: work/
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           pattern: result-*
           path: work/
