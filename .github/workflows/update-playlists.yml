@@ -20,8 +20,8 @@ jobs:
     outputs:
       shards: ${{ steps.split.outputs.shards }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -31,7 +31,7 @@ jobs:
         run: |
           python -m src.prepare
           echo "shards=$(cat work/shards.txt)" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: prep
           path: work/
@@ -47,19 +47,19 @@ jobs:
       matrix:
         shard: ${{ fromJson(needs.prepare.outputs.shards) }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
       - run: pip install -r requirements.txt
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: prep
           path: work/
       - name: Check shard ${{ matrix.shard }}
         run: python -m src.check_shard ${{ matrix.shard }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: result-${{ matrix.shard }}
           path: work/result_${{ matrix.shard }}.json
@@ -71,17 +71,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: 'pip'
       - run: pip install -r requirements.txt
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: prep
           path: work/
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           pattern: result-*
           path: work/
